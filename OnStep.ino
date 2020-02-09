@@ -38,6 +38,17 @@
 // Use Config.xxx.h to configure OnStep to your requirements
 
 // firmware info, these are returned by the ":GV?#" commands
+#include <SPI.h>
+#include <U8x8lib.h>
+#include <U8g2lib.h>
+#include <VSOP87.hpp>
+#include <Ephemeris.hpp>
+#include <Ephemeris.h>
+#include <ELP2000.hpp>
+#include <Calendar.hpp>
+#include <EEPROM.h>
+#include <Wire.h>
+#include <dummy.h>
 #define FirmwareDate          __DATE__
 #define FirmwareVersionMajor  4
 #define FirmwareVersionMinor  0       // minor version 0 to 99
