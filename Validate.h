@@ -11,6 +11,55 @@
   #define AXIS2_TANGENT_ARM OFF
 #endif
 
+#ifndef FEATURE1_PURPOSE
+  #define FEATURE1_PURPOSE OFF
+#endif
+#ifndef FEATURE1_TEMP
+  #define FEATURE1_TEMP OFF
+#endif
+#ifndef FEATURE2_PURPOSE
+  #define FEATURE2_PURPOSE OFF
+#endif
+#ifndef FEATURE2_TEMP
+  #define FEATURE2_TEMP OFF
+#endif
+#ifndef FEATURE3_PURPOSE
+  #define FEATURE3_PURPOSE OFF
+#endif
+#ifndef FEATURE3_TEMP
+  #define FEATURE3_TEMP OFF
+#endif
+#ifndef FEATURE4_PURPOSE
+  #define FEATURE4_PURPOSE OFF
+#endif
+#ifndef FEATURE4_TEMP
+  #define FEATURE4_TEMP OFF
+#endif
+#ifndef FEATURE5_PURPOSE
+  #define FEATURE5_PURPOSE OFF
+#endif
+#ifndef FEATURE5_TEMP
+  #define FEATURE5_TEMP OFF
+#endif
+#ifndef FEATURE6_PURPOSE
+  #define FEATURE6_PURPOSE OFF
+#endif
+#ifndef FEATURE6_TEMP
+  #define FEATURE6_TEMP OFF
+#endif
+#ifndef FEATURE7_PURPOSE
+  #define FEATURE7_PURPOSE OFF
+#endif
+#ifndef FEATURE7_TEMP
+  #define FEATURE7_TEMP OFF
+#endif
+#ifndef FEATURE8_PURPOSE
+  #define FEATURE8_PURPOSE OFF
+#endif
+#ifndef FEATURE8_TEMP
+  #define FEATURE8_TEMP OFF
+#endif
+
 // -----------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------
 // setup defaults
@@ -22,8 +71,30 @@
 // always enable the separate pulse guide rate
 #define SEPARATE_PULSE_GUIDE_RATE ON
 
+// default time for spiral guides is 103.4 seconds
+#define GUIDE_SPIRAL_TIME_LIMIT 103.4
+
 // automatically set MaxRate from SLEW_RATE_BASE_DESIRED
 #define MaxRate ((1000000.0/SLEW_RATE_BASE_DESIRED)/AXIS1_STEPS_PER_DEGREE)
+
+// automatically set focuser/rotator step rate (or focuser DC pwm freq.) from AXISn_SLEW_RATE_DESIRED
+#ifndef AXIS3_STEP_RATE_MAX
+  #define AXIS3_STEP_RATE_MAX (1000.0/(AXIS3_SLEW_RATE_DESIRED*AXIS3_STEPS_PER_DEGREE))
+#endif
+#ifndef AXIS4_STEP_RATE_MAX
+  #if AXIS5_DRIVER_DC_MODE == ON
+    #define AXIS4_STEP_RATE_MAX (1000.0/(AXIS4_SLEW_RATE_DESIRED*10.0))
+  #else
+    #define AXIS4_STEP_RATE_MAX (1000.0/(AXIS4_SLEW_RATE_DESIRED*AXIS4_STEPS_PER_MICRON))
+  #endif
+#endif
+#ifndef AXIS5_STEP_RATE_MAX
+  #if AXIS5_DRIVER_DC_MODE == ON
+    #define AXIS5_STEP_RATE_MAX (1000.0/(AXIS5_SLEW_RATE_DESIRED*10.0))
+  #else
+    #define AXIS5_STEP_RATE_MAX (1000.0/(AXIS5_SLEW_RATE_DESIRED*AXIS5_STEPS_PER_MICRON))
+  #endif
+#endif
 
 // automatically calculate the pecBufferSize
 #if MOUNT_TYPE == ALTAZM
@@ -78,14 +149,29 @@
 #ifndef AXIS1_DRIVER_IGOTO
   #define AXIS1_DRIVER_IGOTO OFF
 #endif
-#ifndef AXIS1_DRIVER_PWM_GRAD
-  #define AXIS1_DRIVER_PWM_GRAD OFF
+#ifndef AXIS1_DRIVER_CHOP_TOFF
+  #define AXIS1_DRIVER_CHOP_TOFF OFF
+#endif
+#ifndef AXIS1_DRIVER_CHOP_HSTART
+  #define AXIS1_DRIVER_CHOP_HSTART OFF
+#endif
+#ifndef AXIS1_DRIVER_CHOP_HEND
+  #define AXIS1_DRIVER_CHOP_HEND OFF
+#endif
+#ifndef AXIS1_DRIVER_CHOP_RNDTF
+  #define AXIS1_DRIVER_CHOP_RNDTF OFF
+#endif
+#ifndef AXIS1_DRIVER_CHOP_TBL
+  #define AXIS1_DRIVER_CHOP_TBL OFF
 #endif
 #ifndef AXIS1_DRIVER_FS_VHIGH
   #define AXIS1_DRIVER_FS_VHIGH OFF
 #endif
-#ifndef AXIS1_DRIVER_SC_VHIGH
-  #define AXIS1_DRIVER_SC_VHIGH OFF
+#ifndef AXIS1_DRIVER_PWM_GRAD
+  #define AXIS1_DRIVER_PWM_GRAD OFF
+#endif
+#ifndef AXIS1_DRIVER_PWM_VHIGH_SC
+  #define AXIS1_DRIVER_PWM_VHIGH_SC OFF
 #endif
 
 #ifndef AXIS2_DRIVER_ENABLE
@@ -111,14 +197,29 @@
 #ifndef AXIS2_DRIVER_IGOTO
   #define AXIS2_DRIVER_IGOTO OFF
 #endif
-#ifndef AXIS2_DRIVER_PWM_GRAD
-  #define AXIS2_DRIVER_PWM_GRAD OFF
+#ifndef AXIS2_DRIVER_CHOP_TOFF
+  #define AXIS2_DRIVER_CHOP_TOFF OFF
+#endif
+#ifndef AXIS2_DRIVER_CHOP_HSTART
+  #define AXIS2_DRIVER_CHOP_HSTART OFF
+#endif
+#ifndef AXIS2_DRIVER_CHOP_HEND
+  #define AXIS2_DRIVER_CHOP_HEND OFF
+#endif
+#ifndef AXIS2_DRIVER_CHOP_RNDTF
+  #define AXIS2_DRIVER_CHOP_RNDTF OFF
+#endif
+#ifndef AXIS2_DRIVER_CHOP_TBL
+  #define AXIS2_DRIVER_CHOP_TBL OFF
 #endif
 #ifndef AXIS2_DRIVER_FS_VHIGH
   #define AXIS2_DRIVER_FS_VHIGH OFF
 #endif
-#ifndef AXIS2_DRIVER_SC_VHIGH
-  #define AXIS2_DRIVER_SC_VHIGH OFF
+#ifndef AXIS2_DRIVER_PWM_GRAD
+  #define AXIS2_DRIVER_PWM_GRAD OFF
+#endif
+#ifndef AXIS2_DRIVER_PWM_VHIGH_SC
+  #define AXIS2_DRIVER_PWM_VHIGH_SC OFF
 #endif
 
 #ifndef AXIS3_DRIVER_ENABLE
@@ -257,10 +358,192 @@
   #error "Configuration (Config.h): Setting WEATHER sensor invalid, use OFF or BME280, BME280_0x76, BME280SPI only."
 #endif
 
+#if FEATURE1_PURPOSE != OFF || FEATURE2_PURPOSE != OFF || FEATURE3_PURPOSE != OFF || FEATURE4_PURPOSE != OFF || FEATURE5_PURPOSE != OFF || FEATURE6_PURPOSE != OFF || FEATURE7_PURPOSE != OFF || FEATURE8_PURPOSE != OFF
+  #define FEATURES_PRESENT
+#endif
+
+#ifdef FEATURES_PRESENT
+#ifndef FEATURE1_NAME
+  #error "Configuration (Config.h): Setting FEATURE1_NAME must be present!"
+#endif
+#ifndef FEATURE1_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE1_PURPOSE must be present!"
+#elif FEATURE1_PURPOSE != OFF && (FEATURE1_PURPOSE < AUXILLARY_FIRST || FEATURE1_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE1_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE1_TEMP
+  #error "Configuration (Config.h): Setting FEATURE1_TEMP must be present!"
+#elif FEATURE1_TEMP != OFF && (FEATURE1_TEMP & DS_MASK) != DS1820 && (FEATURE1_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE1_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE1_PIN
+  #error "Configuration (Config.h): Setting FEATURE1_PIN must be present!"
+#elif FEATURE1_PIN != OFF && (FEATURE1_PIN & DS_MASK) != DS2413 && FEATURE1_PIN < 0 && FEATURE1_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE1_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#ifndef FEATURE2_NAME
+  #error "Configuration (Config.h): Setting FEATURE2_NAME must be present!"
+#endif
+#ifndef FEATURE2_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE2_PURPOSE must be present!"
+#elif FEATURE2_PURPOSE != OFF && (FEATURE2_PURPOSE < AUXILLARY_FIRST || FEATURE2_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE2_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE2_TEMP
+  #error "Configuration (Config.h): Setting FEATURE2_TEMP must be present!"
+#elif FEATURE2_TEMP != OFF && (FEATURE2_TEMP & DS_MASK) != DS1820 && (FEATURE2_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE2_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE2_PIN
+  #error "Configuration (Config.h): Setting FEATURE2_PIN must be present!"
+#elif FEATURE2_PIN != OFF && (FEATURE2_PIN & DS_MASK) != DS2413 && FEATURE2_PIN < 0 && FEATURE2_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE2_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#ifndef FEATURE3_NAME
+  #error "Configuration (Config.h): Setting FEATURE3_NAME must be present!"
+#endif
+#ifndef FEATURE3_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE3_PURPOSE must be present!"
+#elif FEATURE3_PURPOSE != OFF && (FEATURE3_PURPOSE < AUXILLARY_FIRST || FEATURE3_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE3_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE3_TEMP
+  #error "Configuration (Config.h): Setting FEATURE3_TEMP must be present!"
+#elif FEATURE3_TEMP != OFF && (FEATURE3_TEMP & DS_MASK) != DS1820 && (FEATURE3_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE3_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE3_PIN
+  #error "Configuration (Config.h): Setting FEATURE3_PIN must be present!"
+#elif FEATURE3_PIN != OFF && (FEATURE3_PIN & DS_MASK) != DS2413 && FEATURE3_PIN < 0 && FEATURE3_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE3_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#ifndef FEATURE4_NAME
+  #error "Configuration (Config.h): Setting FEATURE4_NAME must be present!"
+#endif
+#ifndef FEATURE4_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE4_PURPOSE must be present!"
+#elif FEATURE4_PURPOSE != OFF && (FEATURE4_PURPOSE < AUXILLARY_FIRST || FEATURE4_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE4_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE4_TEMP
+  #error "Configuration (Config.h): Setting FEATURE4_TEMP must be present!"
+#elif FEATURE4_TEMP != OFF && (FEATURE4_TEMP & DS_MASK) != DS1820 && (FEATURE4_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE4_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE4_PIN
+  #error "Configuration (Config.h): Setting FEATURE4_PIN must be present!"
+#elif FEATURE4_PIN != OFF && (FEATURE4_PIN & DS_MASK) != DS2413 && FEATURE4_PIN < 0 && FEATURE4_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE4_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#ifndef FEATURE5_NAME
+  #error "Configuration (Config.h): Setting FEATURE5_NAME must be present!"
+#endif
+#ifndef FEATURE5_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE5_PURPOSE must be present!"
+#elif FEATURE5_PURPOSE != OFF && (FEATURE5_PURPOSE < AUXILLARY_FIRST || FEATURE5_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE5_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE5_TEMP
+  #error "Configuration (Config.h): Setting FEATURE5_TEMP must be present!"
+#elif FEATURE5_TEMP != OFF && (FEATURE5_TEMP & DS_MASK) != DS1820 && (FEATURE5_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE5_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE5_PIN
+  #error "Configuration (Config.h): Setting FEATURE5_PIN must be present!"
+#elif FEATURE5_PIN != OFF && (FEATURE5_PIN & DS_MASK) != DS2413 && FEATURE5_PIN < 0 && FEATURE5_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE5_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#ifndef FEATURE6_NAME
+  #error "Configuration (Config.h): Setting FEATURE6_NAME must be present!"
+#endif
+#ifndef FEATURE6_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE6_PURPOSE must be present!"
+#elif FEATURE6_PURPOSE != OFF && (FEATURE6_PURPOSE < AUXILLARY_FIRST || FEATURE6_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE6_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE6_TEMP
+  #error "Configuration (Config.h): Setting FEATURE6_TEMP must be present!"
+#elif FEATURE6_TEMP != OFF && (FEATURE6_TEMP & DS_MASK) != DS1820 && (FEATURE6_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE6_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE6_PIN
+  #error "Configuration (Config.h): Setting FEATURE6_PIN must be present!"
+#elif FEATURE6_PIN != OFF && (FEATURE6_PIN & DS_MASK) != DS2413 && FEATURE6_PIN < 0 && FEATURE6_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE6_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#ifndef FEATURE7_NAME
+  #error "Configuration (Config.h): Setting FEATURE7_NAME must be present!"
+#endif
+#ifndef FEATURE7_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE7_PURPOSE must be present!"
+#elif FEATURE7_PURPOSE != OFF && (FEATURE7_PURPOSE < AUXILLARY_FIRST || FEATURE7_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE7_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE7_TEMP
+  #error "Configuration (Config.h): Setting FEATURE7_TEMP must be present!"
+#elif FEATURE7_TEMP != OFF && (FEATURE7_TEMP & DS_MASK) != DS1820 && (FEATURE7_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE7_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE7_PIN
+  #error "Configuration (Config.h): Setting FEATURE7_PIN must be present!"
+#elif FEATURE7_PIN != OFF && (FEATURE7_PIN & DS_MASK) != DS2413 && FEATURE7_PIN < 0 && FEATURE7_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE7_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#ifndef FEATURE8_NAME
+  #error "Configuration (Config.h): Setting FEATURE8_NAME must be present!"
+#endif
+#ifndef FEATURE8_PURPOSE
+  #error "Configuration (Config.h): Setting FEATURE8_PURPOSE must be present!"
+#elif FEATURE8_PURPOSE != OFF && (FEATURE8_PURPOSE < AUXILLARY_FIRST || FEATURE8_PURPOSE > AUXILLARY_LAST)
+  #error "Configuration (Config.h): Setting FEATURE8_PURPOSE invalid, use OFF, SWITCH, ANALOG_OUTPUT, DEW_HEATER, or INTERVALOMETER."
+#endif
+#ifndef FEATURE8_TEMP
+  #error "Configuration (Config.h): Setting FEATURE8_TEMP must be present!"
+#elif FEATURE8_TEMP != OFF && (FEATURE8_TEMP & DS_MASK) != DS1820 && (FEATURE8_TEMP & DS_MASK) != DS18S20
+  #error "Configuration (Config.h): Setting FEATURE8_TEMP invalid, use OFF, DS1820, or DS1820 s/n only."
+#endif
+#ifndef FEATURE8_PIN
+  #error "Configuration (Config.h): Setting FEATURE8_PIN must be present!"
+#elif FEATURE8_PIN != OFF && (FEATURE8_PIN & DS_MASK) != DS2413 && FEATURE8_PIN < 0 && FEATURE8_PIN > 255
+  #error "Configuration (Config.h): Setting FEATURE8_PIN invalid, use OFF, DS2413, DS2413 s/n, or a valid pin# (0 to 255 only.)"
+#endif
+
+#if (FEATURE1_TEMP & DS_MASK) == DS1820 || (FEATURE2_TEMP & DS_MASK) == DS1820 || (FEATURE3_TEMP & DS_MASK) == DS1820 || (FEATURE4_TEMP & DS_MASK) == DS1820 || (FEATURE5_TEMP & DS_MASK) == DS1820 || (FEATURE6_TEMP & DS_MASK) == DS1820 || (FEATURE7_TEMP & DS_MASK) == DS1820 || (FEATURE8_TEMP & DS_MASK) == DS1820 
+  #define DS1820_DEVICES_PRESENT
+#endif
+
+#if (FEATURE1_TEMP & DS_MASK) == DS18S20 || (FEATURE2_TEMP & DS_MASK) == DS18S20 || (FEATURE3_TEMP & DS_MASK) == DS18S20 || (FEATURE4_TEMP & DS_MASK) == DS18S20 || (FEATURE5_TEMP & DS_MASK) == DS18S20 || (FEATURE6_TEMP & DS_MASK) == DS18S20 || (FEATURE7_TEMP & DS_MASK) == DS18S20 || (FEATURE8_TEMP & DS_MASK) == DS18S20 
+  #define DS1820_DEVICES_PRESENT
+#endif
+
+#if (FEATURE1_PIN & DS_MASK) == DS2413 || (FEATURE2_PIN & DS_MASK) == DS2413 || (FEATURE3_PIN & DS_MASK) == DS2413 || (FEATURE4_PIN & DS_MASK) == DS2413 || (FEATURE5_PIN & DS_MASK) == DS2413 || (FEATURE6_PIN & DS_MASK) == DS2413 || (FEATURE7_PIN & DS_MASK) == DS2413 || (FEATURE8_PIN & DS_MASK) == DS2413
+  #define DS2413_DEVICES_PRESENT
+#endif
+#endif
+
+#if !defined(DS1820_DEVICES_PRESENT) && (TELESCOPE_TEMPERATURE & DS_MASK) == DS1820
+  #define DS1820_DEVICES_PRESENT
+#endif
+
+#if !defined(DS1820_DEVICES_PRESENT) && (TELESCOPE_TEMPERATURE & DS_MASK) == DS18S20
+  #define DS1820_DEVICES_PRESENT
+#endif
+
+#if defined(DS2413_DEVICES_PRESENT) || defined(DS1820_DEVICES_PRESENT)
+  #define ONEWIRE_DEVICES_PRESENT
+#endif
+
 #ifndef TELESCOPE_TEMPERATURE
   #error "Configuration (Config.h): Setting TELESCOPE_TEMPERATURE must be present!"
-#elif TELESCOPE_TEMPERATURE != OFF && (TELESCOPE_TEMPERATURE < TELESCOPE_TEMPERATURE_FIRST || TELESCOPE_TEMPERATURE > TELESCOPE_TEMPERATURE_LAST)
-  #error "Configuration (Config.h): Setting TELESCOPE_TEMPERATURE sensor invalid, use OFF or DS1820 only."
+#elif TELESCOPE_TEMPERATURE != OFF && TELESCOPE_TEMPERATURE != DS1820 && (TELESCOPE_TEMPERATURE & 0x3f00000000000000) != 0x2800000000000000
+  #error "Configuration (Config.h): Setting TELESCOPE_TEMPERATURE sensor invalid, use OFF, DS1820, or a DS1820 serial# only."
 #endif
 
 #ifndef HOME_SENSE
@@ -357,7 +640,7 @@
   #error "Configuration (Config.h): Setting TRACK_BACKLASH_RATE must be present!"
 #elif TRACK_BACKLASH_RATE < 5 || TRACK_BACKLASH_RATE > 50
   #error "Configuration (Config.h): Setting TRACK_BACKLASH_RATE invalid, use a number between 5 and 50 (x sidereal rate.)"
-#elif TRACK_BACKLASH_RATE > 25 && AXIS1_DRIVER_MICROSTEPS_GOTO != OFF || AXIS2_DRIVER_MICROSTEPS_GOTO != OFF
+#elif TRACK_BACKLASH_RATE > 25 && (AXIS1_DRIVER_MICROSTEPS_GOTO != OFF || AXIS2_DRIVER_MICROSTEPS_GOTO != OFF)
   #warning "Configuration (Config.h): Setting TRACK_BACKLASH_RATE, above 25x can cause problems if AXISn_STEPS_PER_DEGREE > 30600 *and* on-the-fly micro-step mode switching is used"
 #endif
 
@@ -455,10 +738,20 @@
   #error "Configuration (Config.h): Setting AXIS3_LIMIT_MAX invalid, use a number between 0 and 360 (degrees.)"
 #endif
 
+#if !defined(AXIS4_SLEW_RATE_DESIRED) && !defined(AXIS4_STEP_RATE_MAX)
+  #error "Configuration (Config.h): Setting AXIS4_SLEW_RATE_DESIRED must be present!"
+#elif defined(AXIS4_SLEW_RATE_DESIRED) && AXIS4_DRIVER_DC_MODE == OFF && (AXIS4_SLEW_RATE_DESIRED < 200 || AXIS4_SLEW_RATE_DESIRED > 5000)
+  #error "Configuration (Config.h): Setting AXIS4_SLEW_RATE_DESIRED invalid, use a number between 200 and 5000 (micrometers per second.)"
+#elif defined(AXIS4_SLEW_RATE_DESIRED) &&AXIS4_DRIVER_DC_MODE == ON && (AXIS4_SLEW_RATE_DESIRED < 10 || AXIS4_SLEW_RATE_DESIRED > 100)
+  #error "Configuration (Config.h): Setting AXIS4_SLEW_RATE_DESIRED invalid, use a number between 10 and 100%."
+#endif
+
 #ifndef AXIS4_LIMIT_MIN_RATE
   #error "Configuration (Config.h): Setting AXIS4_LIMIT_MIN_RATE must be present!"
-#elif AXIS4_LIMIT_MIN_RATE < 1 || AXIS4_LIMIT_MIN_RATE > 1000
+#elif AXIS4_DRIVER_DC_MODE == OFF && (AXIS4_LIMIT_MIN_RATE < 1 || AXIS4_LIMIT_MIN_RATE > 1000)
   #error "Configuration (Config.h): Setting AXIS4_LIMIT_MIN_RATE invalid, use a number between 1 and 1000 (micrometers per second.)"
+#elif AXIS4_DRIVER_DC_MODE == ON && (AXIS4_LIMIT_MIN_RATE < 10 || AXIS4_LIMIT_MIN_RATE > 100) 
+  #error "Configuration (Config.h): Setting AXIS4_LIMIT_MIN_RATE invalid, use a number between 10 and 100%."
 #endif
 
 #ifndef AXIS4_LIMIT_MIN
@@ -473,10 +766,20 @@
   #error "Configuration (Config.h): Setting AXIS4_LIMIT_MAX invalid, use a number between 0 and 500 (mm) but > AXIS4_LIMIT_MIN."
 #endif
 
+#if !defined(AXIS5_SLEW_RATE_DESIRED) && !defined(AXIS5_STEP_RATE_MAX)
+  #error "Configuration (Config.h): Setting AXIS5_SLEW_RATE_DESIRED must be present!"
+#elif defined(AXIS5_SLEW_RATE_DESIRED) && AXIS5_DRIVER_DC_MODE == OFF && (AXIS5_SLEW_RATE_DESIRED < 200 || AXIS5_SLEW_RATE_DESIRED > 5000) 
+  #error "Configuration (Config.h): Setting AXIS5_SLEW_RATE_DESIRED invalid, use a number between 200 and 5000 (micrometers per second.)"
+#elif defined(AXIS5_SLEW_RATE_DESIRED) && AXIS5_DRIVER_DC_MODE == ON && (AXIS5_SLEW_RATE_DESIRED < 10 || AXIS5_SLEW_RATE_DESIRED > 100) 
+  #error "Configuration (Config.h): Setting AXIS5_SLEW_RATE_DESIRED invalid, use a number between 10 and 100%."
+#endif
+
 #ifndef AXIS5_LIMIT_MIN_RATE
   #error "Configuration (Config.h): Setting AXIS5_LIMIT_MIN_RATE must be present!"
-#elif AXIS5_LIMIT_MIN_RATE < 1 || AXIS5_LIMIT_MIN_RATE > 1000
+#elif AXIS5_DRIVER_DC_MODE == OFF && (AXIS5_LIMIT_MIN_RATE < 1 || AXIS5_LIMIT_MIN_RATE > 1000)
   #error "Configuration (Config.h): Setting AXIS5_LIMIT_MIN_RATE invalid, use a number between 1 and 1000 (micrometers per second.)"
+#elif AXIS5_DRIVER_DC_MODE == ON && (AXIS5_LIMIT_MIN_RATE < 10 || AXIS5_LIMIT_MIN_RATE > 100) 
+  #error "Configuration (Config.h): Setting AXIS5_LIMIT_MIN_RATE invalid, use a number between 10 and 100%."
 #endif
 
 #ifndef AXIS5_LIMIT_MIN

@@ -4,24 +4,22 @@
 #if defined(__MK64FX512__) || defined(__MK66FX1M0__)
 
 // The multi-purpose pins (Aux3..Aux8 can be analog pwm/dac if supported)
-#define Aux0                 19
-#define Aux1                 18
-#define Aux2                  5
-#define Aux3                 36     // Home SW, this should also be ok as pwm analog output (w/#define Aux3_Analog)
+#define Aux0                 19     // Status LED
+#define Aux1                 18     // ESP8266 GPIO0, SPI MISO/Fault
+#define Aux2                  5     // ESP8266 RST, SPI MISO/Fault
+#define Aux3                 36     // Home SW
 #define Aux4                 39     // OneWire, Home SW
-#define Aux5                A21     // true analog output
-#define Aux5_Analog
-#define Aux6                A22     // true analog output
-#define Aux6_Analog
-#define Aux7                  4     // Limit SW, should be ok as pwm analog output (w/#define Aux7_Analog)
-#define Aux8                 22     // should be ok as pwm analog output (w/#define Aux8_Analog)
+#define Aux5                A21     // Axis3_EN; true analog output
+#define Aux6                A22     // Axis4_EN; true analog output
+#define Aux7                  4     // Limit SW
+#define Aux8                 22     // Status2 LED, Reticle LED
 
 // Misc. pins
 #ifndef DS3234_CS_PIN
   #define DS3234_CS_PIN      10     // Default CS Pin for DS3234 on SPI
 #endif
 #ifndef OneWirePin
-  #define OneWirePin       Aux4     // Default Pin for one wire bus
+  #define OneWirePin       Aux4     // Default Pin for OneWire bus (note: this pin has a 0.1uF capacitor that must be removed for OneWire to function)
 #endif
 #if PINMAP == MaxPCB3
   #define ESP8266Gpio0Pin     2     // ESP8266 GPIO0 (Dir2)

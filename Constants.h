@@ -36,10 +36,14 @@
 #define MaxESP2                     50 // Similar to MaxPCB2 except 3 axes and uses cheaper/more available ESP32 MCU
 #define MaxESP3                     51 // Adds 4th axis and option to flash the WeMos D1 Mini WiFi through OnStep
 
+// Arduino CNC Sheild on WeMos D2 R32 (ESP32)
+#define CNC3                        52 // Similar features to MaxESP3
+
 // Khalid and Dave's PCB for STM32 Blue pill
 #define STM32Blue                   60
 #define STM32Black                  61
-#define PINMAP_LAST                 61
+#define FYSETC_S6                   62
+#define PINMAP_LAST                 62
 // ---------------------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------------------
                                    
@@ -49,7 +53,8 @@
 #define ON_PULLUP                  -3
 #define ON_PULLDOWN                -4
 #define XDIRECT                    -5
-                                   
+#define AUX                        -6
+
 // mount types                     
 #define MOUNT_TYPE_FIRST            1
 #define GEM                         1 // German Equatorial Mount, meridian flips enabled
@@ -73,17 +78,34 @@
 #define BME280_0x77                 1 // BME280 on I2C (at address 0x77)
 #define BME280_0x76                 2 // BME280 on I2C (at address 0x76)
 #define BME280_SPI                  3 // BME280 on SPI (default CS)
-#define WEATHER_LAST                4
+#define BMP280                      4 // BMP280 on I2C (at default address 0x77)
+#define BMP280_0x77                 4 // BMP280 on I2C (at address 0x77)
+#define BMP280_0x76                 5 // BMP280 on I2C (at address 0x76)
+#define BMP280_SPI                  6 // BMP280 on SPI (default CS)
+#define WEATHER_LAST                6
 
-#define TELESCOPE_TEMPERATURE_FIRST 1
-#define DS1820                      1 // DS18B20 on OneWire
-#define TELESCOPE_TEMPERATURE_LAST  1
+// various Dallas/Maxim devices supported
+#define DS1820     0x2800000000000000 // DS1820 "generic" temperature sensors (DS18B20 or DS18S20) for focusing and dew heaters
+#define DS2413     0x3A00000000000000 // DS2413 GPIO pins for dew heaters
+#define CHAIN      0x3A00000000000001 // DS2413 second GPIO
+
+// help for Dallas/Maxim devices (not for use in Config.h)
+#define DS_MASK    0x3F00000000000000
+#define DS18S20    0x1000000000000000
+
+// various auxillary features
+#define AUXILLARY_FIRST             1
+#define SWITCH                      1
+#define ANALOG_OUTPUT               2
+#define DEW_HEATER                  3
+#define INTERVALOMETER              4
+#define AUXILLARY_LAST              4
 
 // coordinate mode for getting and setting RA/Dec
 #define OBSERVED_PLACE              1
 #define TOPOCENTRIC                 2
 #define ASTROMETRIC_J2000           3
-#define TELESCOPE_COORDINATES       TOPOCENTRIC
+#define TOPOCENTRIC_STRICT          OFF
 
 // EEPROM Info ---------------------------------------------------------------------------------------------------------------------
 // General purpose storage A (100 bytes), 0..99
@@ -177,6 +199,31 @@
 #define EE_tcfCoefAxis5            GSB+10  // 4
 #define EE_tcfEnAxis4              GSB+14  // 1
 #define EE_tcfEnAxis5              GSB+15  // 1
+
+#define EE_feature1Value1          GSB+16  // 1
+#define EE_feature1Value2          GSB+17  // 1
+#define EE_feature1Value3          GSB+18  // 1
+#define EE_feature2Value1          GSB+19  // 1
+#define EE_feature2Value2          GSB+20  // 1
+#define EE_feature2Value3          GSB+21  // 1
+#define EE_feature3Value1          GSB+22  // 1
+#define EE_feature3Value2          GSB+23  // 1
+#define EE_feature3Value3          GSB+24  // 1
+#define EE_feature4Value1          GSB+25  // 1
+#define EE_feature4Value2          GSB+26  // 1
+#define EE_feature4Value3          GSB+27  // 1
+#define EE_feature5Value1          GSB+28  // 1
+#define EE_feature5Value2          GSB+29  // 1
+#define EE_feature5Value3          GSB+30  // 1
+#define EE_feature6Value1          GSB+31  // 1
+#define EE_feature6Value2          GSB+32  // 1
+#define EE_feature6Value3          GSB+33  // 1
+#define EE_feature7Value1          GSB+34  // 1
+#define EE_feature7Value2          GSB+35  // 1
+#define EE_feature7Value3          GSB+36  // 1
+#define EE_feature8Value1          GSB+37  // 1
+#define EE_feature8Value2          GSB+38  // 1
+#define EE_feature8Value3          GSB+39  // 1
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Unique identifier for the current initialization format for NV, do not change

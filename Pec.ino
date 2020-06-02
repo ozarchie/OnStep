@@ -18,28 +18,38 @@ long wormRotationPos    = 0;
 long lastWormRotationPos=-1;
 
 void pec() {
+  // write PEC data to EEPROM as needed
+  if (pecAutoRecord > 0) { pecAutoRecord--; nv.update(EE_pecTable+pecAutoRecord,pecBuffer[pecAutoRecord]); }
+ 
   // PEC is only active when we're tracking at the sidereal rate with a guide rate that makes sense
+  if (trackingState != TrackingSidereal || parkStatus != NotParked || ((guideDirAxis1 || guideDirAxis2) && activeGuideRate > GuideRate1x)) { disablePec(); return; }
 
   // keep track of our current step position, and when the step position on the worm wraps during playback
   cli(); long pecPos=(long)targetAxis1.part.m; sei();
   
   #if PEC_SENSE == OFF
     wormSensedFirst=true;
-  #endif
-  #if PEC_SENSE >= 0
+  #elif PEC_SENSE >= 0
     // for analog sense, with 60 second delay before redetect
     long dist; if (wormSensePos > pecPos) dist=wormSensePos-pecPos; else dist=pecPos-wormSensePos;
-    if ((dist > StepsPerSecondAxis1*60.0) && (pecAnalogValue > PEC_SENSE)) {
+
+    static int lastValue; lastValue=pecValue; pecValue = analogRead(AnalogPecPin);
+    #if PEC_SENSE_STATE == HIGH
+      if ((dist > StepsPerSecondAxis1*60.0) && (lastValue <= PEC_SENSE) && (pecValue > PEC_SENSE)) {
+    #else
+      if ((dist > StepsPerSecondAxis1*60.0) && (lastValue >= PEC_SENSE) && (pecValue < PEC_SENSE)) {
+    #endif
       wormSensePos=pecPos;
       wormSensedAgain=true;
       wormSensedFirst=true;
       pecBufferStart=true;
     } else pecBufferStart=false;
-  #endif
-  #if PEC_SENSE == ON || PEC_SENSE == ON_PULLUP || PEC_SENSE == ON_PULLDOWN
+  #elif PEC_SENSE == ON || PEC_SENSE == ON_PULLUP || PEC_SENSE == ON_PULLDOWN
     // for digital sense, with 60 second delay before redetect
     long dist; if (wormSensePos > pecPos) dist=wormSensePos-pecPos; else dist=pecPos-wormSensePos;
-    if ((dist > StepsPerSecondAxis1*60.0) && (digitalRead(PecPin) == PEC_SENSE_STATE)) {
+
+    static int lastValue; lastValue=pecValue; pecValue=digitalRead(PecPin);
+    if ((dist > StepsPerSecondAxis1*60.0) && (pecValue != lastValue) && (pecValue == PEC_SENSE_STATE)) {
       wormSensePos=pecPos;
       wormSensedAgain=true;
       wormSensedFirst=true;

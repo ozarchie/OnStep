@@ -33,17 +33,20 @@
  */
  
 #define OETHS
-#define Product "OnEth"
+#define Product "Ethernet Server"
 #define FirmwareDate          __DATE__
 #define FirmwareTime          __TIME__
 #define FirmwareVersionMajor  "1"
-#define FirmwareVersionMinor  "12"
+#define FirmwareVersionMinor  "13"
 #define FirmwareVersionPatch  "d"
 
 #define Version FirmwareVersionMajor "." FirmwareVersionMinor FirmwareVersionPatch
 
-// work around PROGMEM use on Teensy3.2: FPSTR() gets ignored
-#define FPSTR
+// work around PROGMEM use on Teensy3.2 etc: FPSTR() gets ignored
+#if !defined(ESP8266) && !defined(ESP32)
+  #define ICACHE_RAM_ATTR
+  #define FPSTR
+#endif
 
 #include <limits.h>
 
@@ -80,7 +83,6 @@
 int webTimeout=TIMEOUT_WEB;
 int cmdTimeout=TIMEOUT_CMD;
 
-#define ICACHE_RAM_ATTR
 #define AXIS1_ENC_A_PIN 5  // pin# for Axis1 encoder, for A or CW
 #define AXIS1_ENC_B_PIN 6  // pin# for Axis1 encoder, for B or CCW
 #define AXIS2_ENC_A_PIN 7  // pin# for Axis2 encoder, for A or CW
@@ -230,6 +232,9 @@ Again:
   server.on("/control.htm", handleControl);
   server.on("/control.txt", controlAjax);
   server.on("/controlA.txt", controlAjaxGet);
+  server.on("/auxiliary.htm", handleAux);
+  server.on("/auxiliaryA.txt", auxAjaxGet);
+  server.on("/auxiliary.txt", auxAjax);
   server.on("/pec.htm", handlePec);
   server.on("/pec.txt", pecAjax);
   server.on("/", handleRoot);
