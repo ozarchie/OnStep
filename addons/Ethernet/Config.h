@@ -17,6 +17,15 @@
 #define W5500                         OFF //    OFF, ON If using W5500 Ethernet Adapter: RST ctrl Pin9, SPI default pins,     Option
                                           //         CS on Pin10. OFF for W5100 adapter. Uses standard Arduino libraries.
 
+// ETHERNET SETTINGS ---------------------------------------------------------------------------------------------------------------
+// Enter a unique MAC address for your controller if you like:
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+// The IP addresses below will be dependent on your local network:
+IPAddress ip(192, 168, 1, 55);
+IPAddress myDns(192,168, 1, 1);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
+
 // SERIAL PORTS --------------------------------------------------------------------------------------------------------------------
 #define SERIAL_BAUD_DEFAULT          9600 //   9600, Common baud rates for these parameters are 9600,19200,57600,115200.      Infreq
 #define SERIAL_BAUD                 57600 //  57600, Use 19200 if talking to a Mega2560 OnStep                               <-Req'd
@@ -54,36 +63,6 @@
 #define AXIS1_ENC_RATE_AUTO           OFF //    OFF, n, (Worm period in seconds.) Adjusts avg encoder pulse rate to account   Option
                                           //         for skew in the average guide rate over the last worm period.            Option
 #define AXIS1_ENC_BIN_AVG             OFF //    OFF, n, (Number of bins.)  Enables binned rolling average feature.            Option
-
-// AUXILLARY SWITCH/FEATURE CONTROL ------------------------------------------------------------------------------------------------
-// *** Warning: only OnStep Aux pins that are unused for other purposes should be assigned! ***
-#define SW0_OFF                           //   _OFF, "Name" for Aux0 feature on Control webpage, provides On/Off control.     Adjust
-#define SW1_OFF                           //   _OFF, "Name" for Aux1 feature on Control webpage, provides On/Off control.     Adjust
-#define SW2_OFF                           //   _OFF, "Name" for Aux2 feature on Control webpage, provides On/Off control.     Adjust
-#define SW3_OFF                           //   _OFF, "Name" for Aux3 feature on Control webpage, provides On/Off control.     Adjust
-#define SW4_OFF                           //   _OFF, "Name" for Aux4 feature on Control webpage, provides On/Off control.     Adjust
-#define SW5_OFF                           //   _OFF, "Name" for Aux5 feature on Control webpage, provides On/Off control.     Adjust
-#define SW6_OFF                           //   _OFF, "Name" for Aux6 feature on Control webpage, provides On/Off control.     Adjust
-#define SW7_OFF                           //   _OFF, "Name" for Aux7 feature on Control webpage, provides On/Off control.     Adjust
-#define SW8_OFF                           //   _OFF, "Name" for Aux8 feature on Control webpage, provides On/Off control.     Adjust
-
-// AUXILLARY ANALOG/FEATURE CONTROL ------------------------------------------------------------------------------------------------
-// *** Warning: only OnStep Aux pins that are unused for other purposes should be assigned! ***
-#define AN3_OFF                           //   _OFF, "Name" for Aux3 feature on Control webpage, provides 0..100% PWM.        Adjust
-#define AN4_OFF                           //   _OFF, "Name" for Aux4 feature on Control webpage, provides 0..100% PWM.        Adjust
-#define AN5_OFF                           //   _OFF, "Name" for Aux5 feature on Control webpage, provides 0..100% PWM.        Adjust
-#define AN6_OFF                           //   _OFF, "Name" for Aux6 feature on Control webpage, provides 0..100% PWM.        Adjust
-#define AN7_OFF                           //   _OFF, "Name" for Aux7 feature on Control webpage, provides 0..100% PWM.        Adjust
-#define AN8_OFF                           //   _OFF, "Name" for Aux8 feature on Control webpage, provides 0..100% PWM.        Adjust
-
-// ETHERNET SETTINGS ---------------------------------------------------------------------------------------------------------------
-// Enter a unique MAC address for your controller if you like:
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-// The IP addresses below will be dependent on your local network:
-IPAddress ip(192, 168, 1, 55);
-IPAddress myDns(192,168, 1, 1);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
 
 // THAT'S IT FOR USER CONFIGURATION!
 

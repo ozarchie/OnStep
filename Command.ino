@@ -133,10 +133,11 @@ void processCommands() {
           // telescope should be set in the polar home (CWD) for a starting point
           // this command sets indexAxis1, indexAxis2, azmCor=0; altCor=0;
           setHome();
+
           // start tracking
           trackingState=TrackingSidereal;
           enableStepperDrivers();
-        
+
           // start align...
           alignNumStars=command[1]-'0';
           alignThisStar=1;
@@ -274,7 +275,11 @@ void processCommands() {
             SerialA.println("Waiting for data, you have one minute to start the upload.");
             delay(1000);
 
+  #ifdef SERIAL_B_RX
+            SerialB.begin(115200, SERIAL_8N1, SERIAL_B_RX, SERIAL_B_TX);
+  #else
             SerialB.begin(115200);
+  #endif
             SerialA.begin(115200);
             delay(1000);
 
@@ -309,7 +314,11 @@ void processCommands() {
             SerialA.println("returning to default Baud rates, and resuming OnStep operation...");
             delay(500);
 
+  #ifdef SERIAL_B_RX
+            SerialB.begin(SERIAL_B_BAUD_DEFAULT, SERIAL_8N1, SERIAL_B_RX, SERIAL_B_TX);
+  #else
             SerialB.begin(SERIAL_B_BAUD_DEFAULT);
+  #endif
             SerialA.begin(SERIAL_A_BAUD_DEFAULT);
             delay(1000);
 
@@ -355,9 +364,9 @@ void processCommands() {
 //            Return: 0 on failure
 //                    1 on success
         if (command[1] == 'A') {
-          if (parameter[0] == '1' && parameter[1] == 0) { primaryFocuser='F'; secondaryFocuser='f'; }
+          if (parameter[0] == '1' && parameter[1] == 0) { primaryFocuser=toupper(secondaryFocuser); secondaryFocuser=tolower(primaryFocuser); }
 #if FOCUSER2 == ON
-          else if (parameter[0] == '2' && parameter[1] == 0) { primaryFocuser='f'; secondaryFocuser='F'; }
+          else if (parameter[0] == '2' && parameter[1] == 0) { primaryFocuser=tolower(secondaryFocuser); secondaryFocuser=toupper(primaryFocuser); }
 #endif
           else commandError=CE_PARAM_RANGE;
         } else
@@ -389,7 +398,7 @@ void processCommands() {
 // :FC[sn.n]# Set focuser temperature compensation coefficient in um per deg. C (+ moves out as temperature falls)
 //            Return: 0 on failure
 //                    1 on success
-        if (command[1] == 'C') { f = atof(parameter); if (abs(f) < 10000.0) foc->setTcfCoef(f); else commandError=CE_PARAM_RANGE; } else
+        if (command[1] == 'C') { f = atof(parameter); if (fabs(f) < 10000.0) foc->setTcfCoef(f); else commandError=CE_PARAM_RANGE; } else
 // :Fc#       Get focuser temperature compensation enable status
 //            Return: 0 if disabled
 //                    1 if enabled
@@ -506,9 +515,9 @@ void processCommands() {
 //            Returns: sDD*MM'SS.s#
       if (command[1] == 'D')  {
 #ifdef HAL_SLOW_PROCESSOR
-        if (millis()-_coord_t > 500)
+        if ((long)(millis()-_coord_t) > 500)
 #else
-        if (millis()-_coord_t > 50)
+        if ((long)(millis()-_coord_t) > 50)
 #endif
         {
           getEqu(&f,&f1,false);
@@ -571,7 +580,20 @@ void processCommands() {
 //            Returns: HH:MM:SS#
 //            On devices with single precision fp several days up-time will cause loss of precision as additional mantissa digits are needed to represent hours
 //            Devices with double precision fp are limitated by sidereal clock overflow which takes 249 days
-      if (command[1] == 'L' && parameter[0] == 0)  { LMT=timeRange(UT1-timeZone); doubleToHms(reply,&LMT,PM_HIGH); booleanReply=false; } else 
+// :GLa#      Get Local Time in 24 hour format (high precision)
+//            Returns: HH:MM:SS.ss#
+//            On devices with single precision fp several days up-time will cause loss of precision as additional mantissa digits are needed to represent hours
+//            Devices with double precision fp are limitated by sidereal clock overflow which takes 249 days
+      if (command[1] == 'L') {
+        LMT=timeRange(UT1-timeZone);
+        if ( parameter[0] == 0)  {
+          doubleToHms(reply,&LMT,PM_HIGH); booleanReply=false;
+        } else 
+        if (parameter[0] == 'a' && parameter[1] == 0) {
+          doubleToHms(reply,&LMT,PM_HIGHEST); booleanReply=false;
+        }
+      }
+      else
 // :GM#       Get site 1 name
 // :GN#       Get site 2 name
 // :GO#       Get site 3 name
@@ -601,9 +623,9 @@ void processCommands() {
 //            Returns: HH:MM:SS.ss#
       if (command[1] == 'R')  {
 #ifdef HAL_SLOW_PROCESSOR
-        if (millis()-_coord_t > 500)
+        if ((long)(millis()-_coord_t) > 500)
 #else
-        if (millis()-_coord_t > 50)
+        if ((long)(millis()-_coord_t) > 50)
 #endif
         {
           getEqu(&f,&f1,false);
@@ -634,7 +656,17 @@ void processCommands() {
       } else 
 // :GS#       Get the Sidereal Time as sexagesimal value in 24 hour format
 //            Returns: HH:MM:SS#
-      if (command[1] == 'S' && parameter[0] == 0)  { f=LST(); doubleToHms(reply,&f,PM_HIGH); booleanReply=false; } else 
+// :GSa#      Get the Sidereal Time as sexagesimal value in 24 hour format, with high precision
+//            Returns HH:MM:SS.ss#
+      if (command[1] == 'S') {
+        f = LST();
+        if (parameter[0] == 0) {
+          doubleToHms(reply,&f,PM_HIGH); booleanReply=false;
+        } else 
+        if (parameter[0] == 'a' && parameter[1] == 0) {
+          doubleToHms(reply,&f,PM_HIGHEST); booleanReply=false;
+        }
+      } else
 // :GT#       Get tracking rate, 0.0 unless TrackingSidereal
 //            Returns: n.n# (OnStep returns more decimal places than LX200 standard)
       if (command[1] == 'T' && parameter[0] == 0)  {
@@ -716,9 +748,9 @@ void processCommands() {
 #endif
         if (rateCompensation == RC_NONE) {
           double tr=getTrackingRate60Hz();
-          if (abs(tr-57.900)<0.001)                  reply[1]|=0b10000001; else                              // Lunar rate selected
-          if (abs(tr-60.000)<0.001)                  reply[1]|=0b10000010; else                              // Solar rate selected
-          if (abs(tr-60.136)<0.001)                  reply[1]|=0b10000011;                                   // King rate selected
+          if (fabs(tr-57.900)<0.001)                 reply[1]|=0b10000001; else                              // Lunar rate selected
+          if (fabs(tr-60.000)<0.001)                 reply[1]|=0b10000010; else                              // Solar rate selected
+          if (fabs(tr-60.136)<0.001)                 reply[1]|=0b10000011;                                   // King rate selected
         }
         
         if (syncToEncodersOnly)                      reply[1]|=0b10000100;                                   // sync to encoders only
@@ -849,7 +881,7 @@ void processCommands() {
           if (parameter[0] == '9') { // 9n: Misc.
             switch (parameter[1]) {
               case '0': dtostrf(guideRates[currentPulseGuideRate]/15.0,2,2,reply); booleanReply=false; break;// pulse-guide rate
-              case '1': sprintf(reply,"%i",pecAnalogValue); booleanReply=false; break;                       // pec analog value
+              case '1': sprintf(reply,"%i",pecValue); booleanReply=false; break;                             // pec analog value
               case '2': dtostrf(maxRate/16.0,3,3,reply); booleanReply=false; break;                          // MaxRate (current)
               case '3': dtostrf((double)MaxRateDef,3,3,reply); booleanReply=false; break;                    // MaxRateDef (default)
               case '4': if (meridianFlip == MeridianFlipNever) { sprintf(reply,"%d N",getInstrPierSide()); } else { sprintf(reply,"%d",getInstrPierSide()); } booleanReply=false; break; // pierSide (N if never)
@@ -958,32 +990,13 @@ void processCommands() {
               default:  commandError=CE_CMD_UNKNOWN;
             }
           } else
-#ifdef Aux0
-          if (parameter[0] == 'G' && parameter[1] == '0') { sprintf(reply,"%d",(int)round((float)valueAux0/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux1
-          if (parameter[0] == 'G' && parameter[1] == '1') { sprintf(reply,"%d",(int)round((float)valueAux1/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux2
-          if (parameter[0] == 'G' && parameter[1] == '2') { sprintf(reply,"%d",(int)round((float)valueAux2/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux3
-          if (parameter[0] == 'G' && parameter[1] == '3') { sprintf(reply,"%d",(int)round((float)valueAux3/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux4
-          if (parameter[0] == 'G' && parameter[1] == '4') { sprintf(reply,"%d",(int)round((float)valueAux4/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux5
-          if (parameter[0] == 'G' && parameter[1] == '5') { sprintf(reply,"%d",(int)round((float)valueAux5/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux6
-          if (parameter[0] == 'G' && parameter[1] == '6') { sprintf(reply,"%d",(int)round((float)valueAux6/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux7
-          if (parameter[0] == 'G' && parameter[1] == '7') { sprintf(reply,"%d",(int)round((float)valueAux7/2.55)); booleanReply=false; } else
-#endif
-#ifdef Aux8
-          if (parameter[0] == 'G' && parameter[1] == '8') { sprintf(reply,"%d",(int)round((float)valueAux8/2.55)); booleanReply=false; } else
+#ifdef FEATURES_PRESENT
+          if (parameter[0] == 'X') { // Xn: get auXiliary feature
+            featuresGetCommand(parameter,reply,booleanReply);
+          } else
+          if (parameter[0] == 'Y') { // Yn: get auXiliary feature temperature
+            featuresGetInfoCommand(parameter,reply,booleanReply);
+          } else
 #endif
             commandError=CE_CMD_UNKNOWN;
         } else commandError=CE_CMD_UNKNOWN;
@@ -1242,16 +1255,22 @@ void processCommands() {
           } else commandError=CE_PARAM_RANGE;
         } else commandError=CE_PARAM_FORM;
       } else
-// :Me# :Mw#  Move Telescope East or West at current slew rate
+// :Me# :Mw#  Move Telescope East or West at current guide rate
 //            Returns: Nothing
       if ((command[1] == 'e' || command[1] == 'w') && parameter[0] == 0) {
         commandError=startGuideAxis1(command[1],currentGuideRate,GUIDE_TIME_LIMIT*1000);
         booleanReply=false;
       } else
-// :Mn# :Ms#  Move Telescope North or South at current slew rate
+// :Mn# :Ms#  Move Telescope North or South at current guide rate
 //            Returns: Nothing
       if ((command[1] == 'n' || command[1] == 's') && parameter[0] == 0) {
         commandError=startGuideAxis2(command[1],currentGuideRate,GUIDE_TIME_LIMIT*1000);
+        booleanReply=false;
+      } else
+// :Mp#  Move Telescope for sPiral search at current guide rate
+//            Returns: Nothing
+      if ((command[1] == 'p') && parameter[0] == 0) {
+        commandError=startGuideSpiral(currentGuideRate,GUIDE_SPIRAL_TIME_LIMIT*1000);
         booleanReply=false;
       } else
 
@@ -1521,7 +1540,12 @@ void processCommands() {
             #ifdef HAL_SERIAL_TRANSMIT
             while (SerialB.transmit()); 
             #endif
-            delay(50); SerialB.begin(baudRate[i]); 
+            delay(50);
+  #ifdef SERIAL_B_RX
+            SerialB.begin(baudRate[i], SERIAL_8N1, SERIAL_B_RX, SERIAL_B_TX);
+  #else
+            SerialB.begin(baudRate[i]);
+  #endif
             booleanReply=false;
 #endif
 #if defined(HAL_SERIAL_C_ENABLED) && !defined(HAL_SERIAL_C_BLUETOOTH)
@@ -1737,7 +1761,7 @@ void processCommands() {
         } else
         if (parameter[0] == '9') { // 9n: Misc.
           switch (parameter[1]) {
-            case '2': // set new acceleration rate (returns 1 success or 0 failure)
+            case '2': // set new slew rate (returns 1 success or 0 failure)
               if (!isSlewing()) {
                 maxRate=strtod(&parameter[3],&conv_end)*16.0;
                 if (maxRate < (double)MaxRateDef*8.0) maxRate=(double)MaxRateDef*8.0;
@@ -1747,7 +1771,7 @@ void processCommands() {
                 setAccelerationRates(maxRate);
               } else commandError=CE_MOUNT_IN_MOTION;
             break;
-            case '3': // acceleration rate preset (returns nothing)
+            case '3': // slew rate preset (returns nothing)
               booleanReply=false;
               if (!isSlewing()) {
                 switch (parameter[3]) {
@@ -1787,24 +1811,26 @@ void processCommands() {
               if (parameter[3] == '1') { if (waitingHome) waitingHomeContinue=true; } commandError=CE_PARAM_RANGE;
             break;
             case 'A': // temperature in deg. C
-              f=strtod(parameter,&conv_end);
-              if (&parameter[0] != conv_end && f >= -100.0 && f < 100.0) {
+              f=strtod(&parameter[3],&conv_end);
+              if (&parameter[3] != conv_end && f >= -100.0 && f < 100.0) {
                 ambient.setTemperature(f);
               } else commandError=CE_PARAM_RANGE;
             break;
             case 'B': // pressure in mb
-              f=strtod(parameter,&conv_end);
-              if (&parameter[0] != conv_end && f >= 500.0 && f < 1500.0) {
+              f=strtod(&parameter[3],&conv_end);
+              if (&parameter[3] != conv_end && f >= 500.0 && f < 1500.0) {
                 ambient.setPressure(f);
               } else commandError=CE_PARAM_RANGE;
             break;
             case 'C': // relative humidity in % 
-              if (&parameter[0] != conv_end && f >= 0.0 && f < 100.0) {
+              f=strtod(&parameter[3],&conv_end);
+              if (&parameter[3] != conv_end && f >= 0.0 && f < 100.0) {
                 ambient.setHumidity(f);
               } else commandError=CE_PARAM_RANGE;
             break;
             case 'D': // altitude 
-              if (&parameter[0] != conv_end && f >= -100.0 && f < 20000.0) {
+              f=strtod(&parameter[3],&conv_end);
+              if (&parameter[3] != conv_end && f >= -100.0 && f < 20000.0) {
                 ambient.setAltitude(f);
               } else commandError=CE_PARAM_RANGE;
             break;
@@ -1816,14 +1842,14 @@ void processCommands() {
           switch (parameter[1]) {
             case '9': // minutes past meridianE
               degreesPastMeridianE=(double)strtol(&parameter[3],NULL,10)/4.0;
-              if (abs(degreesPastMeridianE) <= 180) {
+              if (labs(degreesPastMeridianE) <= 180) {
                 i=round(degreesPastMeridianE); if (degreesPastMeridianE > 60) i= 60+round((i-60)/2); else if (degreesPastMeridianE < -60) i=-60+round((i+60)/2);
                 nv.write(EE_dpmE,round(i+128));
               } else commandError=CE_PARAM_RANGE;
               break;
             case 'A': // minutes past meridianW
               degreesPastMeridianW=(double)strtol(&parameter[3],NULL,10)/4.0;
-              if (abs(degreesPastMeridianW) <= 180) {
+              if (labs(degreesPastMeridianW) <= 180) {
                 i=round(degreesPastMeridianW); if (degreesPastMeridianW > 60) i= 60+round((i-60)/2); else if (degreesPastMeridianW < -60) i=-60+round((i+60)/2);
                 nv.write(EE_dpmW,round(i+128));
               } else commandError=CE_PARAM_RANGE;
@@ -1832,70 +1858,13 @@ void processCommands() {
           }
         } else
 #endif
-        if (parameter[0] == 'G') { // Gn: General purpose output
-          long v=(double)strtol(&parameter[3],NULL,10);
-          if (v >= 0 && v <= 255) {
-#ifdef Aux0
-            if (parameter[1] == '0') { valueAux0=v; static bool init=false; if (!init) { pinMode(Aux0,OUTPUT); init=true; } if (v == 0) digitalWrite(Aux0,LOW); else digitalWrite(Aux0,HIGH); } else
+#ifdef FEATURES_PRESENT
+        if (parameter[0] == 'X') { // Xn: set auXiliary feature
+          featuresSetCommand(parameter);
+        } else
 #endif
-#ifdef Aux1
-            if (parameter[1] == '1') { valueAux1=v; static bool init=false; if (!init) { pinMode(Aux1,OUTPUT); init=true; } if (v == 0) digitalWrite(Aux1,LOW); else digitalWrite(Aux1,HIGH); } else
-#endif
-#ifdef Aux2
-            if (parameter[1] == '2') { valueAux2=v; static bool init=false; if (!init) { pinMode(Aux2,OUTPUT); init=true; } if (v == 0) digitalWrite(Aux2,LOW); else digitalWrite(Aux2,HIGH); } else
-#endif
-#ifdef Aux3
-            if (parameter[1] == '3') { valueAux3=v; static bool init=false; if (!init) { pinMode(Aux3,OUTPUT); init=true; }
-  #ifdef Aux3_Analog
-            analogWrite(Aux3,v); } else
-  #else
-            if (v == 0) digitalWrite(Aux3,LOW); else digitalWrite(Aux3,HIGH); } else
-  #endif
-#endif
-#ifdef Aux4
-            if (parameter[1] == '4') { valueAux4=v; static bool init=false; if (!init) { pinMode(Aux4,OUTPUT); init=true; }
-  #ifdef Aux4_Analog
-            analogWrite(Aux4,v); } else
-  #else
-            if (v == 0) digitalWrite(Aux4,LOW); else digitalWrite(Aux4,HIGH); } else
-  #endif
-#endif
-#ifdef Aux5
-            if (parameter[1] == '5') { valueAux5=v; static bool init=false; if (!init) { pinMode(Aux5,OUTPUT); init=true; }
-  #ifdef Aux5_Analog
-            analogWrite(Aux5,v); } else
-  #else
-            if (v == 0) digitalWrite(Aux5,LOW); else digitalWrite(Aux5,HIGH); } else
-  #endif
-#endif
-#ifdef Aux6
-            if (parameter[1] == '6') { valueAux6=v; static bool init=false; if (!init) { pinMode(Aux6,OUTPUT); init=true; }
-  #ifdef Aux6_Analog
-            analogWrite(Aux6,v); } else
-  #else
-            if (v == 0) digitalWrite(Aux6,LOW); else digitalWrite(Aux6,HIGH); } else
-  #endif
-#endif
-#ifdef Aux7
-            if (parameter[1] == '7') { valueAux7=v; static bool init=false; if (!init) { pinMode(Aux7,OUTPUT); init=true; }
-  #ifdef Aux7_Analog
-            analogWrite(Aux7,v); } else
-  #else
-            if (v == 0) digitalWrite(Aux7,LOW); else digitalWrite(Aux7,HIGH); } else
-  #endif
-#endif
-#ifdef Aux8
-            if (parameter[1] == '8') { valueAux8=v; static bool init=false; if (!init) { pinMode(Aux8,OUTPUT); init=true; }
-  #ifdef Aux8_Analog
-            analogWrite(Aux8,v); } else
-  #else
-            if (v == 0) digitalWrite(Aux8,LOW); else digitalWrite(Aux8,HIGH); } else
-  #endif
-#endif
-            commandError=CE_PARAM_RANGE;
-          } else commandError=CE_CMD_UNKNOWN;
-        } else commandError=CE_CMD_UNKNOWN;
-      } else
+          commandError=CE_CMD_UNKNOWN;
+       } else
 // :Sz[DDD*MM]#
 //            Set target object Azimuth to DDD*MM or DDD*MM:SS assumes high precision but falls back to low precision
 //            Return: 0 on failure
@@ -2057,16 +2026,19 @@ void processCommands() {
           } commandError=CE_CMD_UNKNOWN;
         } else {
           // it should be an int, see if it converts and is in range
-          if (atoi2(parameter,&i)) {
-            if (i >= 0 && i < pecBufferSize) {
-              // should be another int here, see if it converts and is in range
-              if (atoi2((char*)&parameter[5],&i2)) {
-                if (i2 >= -128 && i2 <= 127) {
-                  pecBuffer[i]=i2+128;
-                  pecRecorded =true;
-                } else commandError=CE_PARAM_RANGE;
-              } else commandError=CE_PARAM_FORM;
-            } else commandError=CE_PARAM_RANGE;
+          char *parameter2=strchr(parameter,',');
+          if (parameter2) {
+            parameter2[0]=0; parameter2++;
+            if (atoi2(parameter,&i)) {
+              if (i >= 0 && i < pecBufferSize) {
+                if (atoi2(parameter2,&i2)) {
+                  if (i2 >= -128 && i2 <= 127) {
+                    pecBuffer[i]=i2+128;
+                    pecRecorded =true;
+                  } else commandError=CE_PARAM_RANGE;
+                } else commandError=CE_PARAM_FORM;
+              } else commandError=CE_PARAM_RANGE;
+            } else commandError=CE_PARAM_FORM;
           } else commandError=CE_PARAM_FORM;
           booleanReply=false;
         }
@@ -2182,9 +2154,14 @@ void decMaxLimit() {
   }
 }
 
-// stops all motion except guiding
+// stops all motion except most guiding
 void stopLimit() {
-  if (trackingState == TrackingMoveTo) { if (!abortSlew) abortSlew=StartAbortSlew; } else trackingState=TrackingNone;
+  if (trackingState == TrackingMoveTo) {
+    if (!abortSlew) abortSlew=StartAbortSlew;
+  } else {
+    trackingState=TrackingNone;
+    if (spiralGuide) stopGuideSpiral();
+  }
 }
 
 // stops all motion including guiding

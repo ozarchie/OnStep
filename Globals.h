@@ -33,7 +33,7 @@ double HzCf                             = 16000000.0/60.0;   // conversion facto
 volatile long SiderealRate;                                  // based on the siderealInterval, time between steps sidereal tracking
 volatile long TakeupRate;                                    // takeup rate for synchronizing target and actual positions
                                                                           
-long last_loop_micros                   = 0;                 // workload monitoring
+unsigned long last_loop_micros          = 0;                 // workload monitoring
 long this_loop_time                     = 0;
 long loop_time                          = 0;
 long worst_loop_time                    = 0;
@@ -75,12 +75,12 @@ boolean faultAxis2                      = false;
 #if AXIS1_DRIVER_MODEL == TMC_SPI
   #define AXIS1_DRIVER_SWITCH_RATE 150*16L
 #else
-  #define AXIS1_DRIVER_SWITCH_RATE 128*16L
+  #define AXIS1_DRIVER_SWITCH_RATE 80*16L
 #endif
 #if AXIS2_DRIVER_MODEL == TMC_SPI
   #define AXIS2_DRIVER_SWITCH_RATE 150*16L
 #else
-  #define AXIS2_DRIVER_SWITCH_RATE 128*16L
+  #define AXIS2_DRIVER_SWITCH_RATE 80*16L
 #endif
 
 #define default_tracking_rate 1
@@ -137,6 +137,7 @@ volatile double StepsForRateChangeAxis2 = (sqrt((double)SLEW_ACCELERATION_DIST*(
 
 // Location ------------------------------------------------------------------------------------------------------------------------
 double latitude                         = 0.0;
+double latitudeAbs                      = 0.0;
 double latitudeSign                     = 1.0;
 double cosLat                           = 1.0;
 double sinLat                           = 0.0;
@@ -149,6 +150,9 @@ double longitude                        = 0.0;
 #endif
 
 // Coordinates ---------------------------------------------------------------------------------------------------------------------
+#ifndef TELESCOPE_COORDINATES
+  #define TELESCOPE_COORDINATES TOPOCENTRIC
+#endif
 #if MOUNT_TYPE == GEM
   double homePositionAxis1              = 90.0;
 #else
@@ -282,6 +286,7 @@ volatile byte guideDirAxis1             = 0;
 char          ST4DirAxis1               = 'b';
 volatile byte guideDirAxis2             = 0;
 char          ST4DirAxis2               = 'b';
+int           spiralGuide               = 0;
 
 volatile double guideTimerRateAxis1     = 0.0;
 volatile double guideTimerRateAxis2     = 0.0;
@@ -307,11 +312,16 @@ long    lastPecIndex                    = -1;
 int     pecBufferSize                   = PEC_BUFFER_SIZE;
 long    pecIndex                        = 0;
 long    pecIndex1                       = 0;
-int     pecAnalogValue                  = 0;
+#if PEC_SENSE == ON || PEC_SENSE == ON_PULLUP || PEC_SENSE == ON_PULLDOWN
+  int   pecValue                        = PEC_SENSE_STATE;
+#elif PEC_SENSE_STATE == HIGH
+  int   pecValue                        = 1023;
+#else
+  int   pecValue                        = 0;
+#endif
 int     pecAutoRecord                   = 0;                 // for writing to PEC table to EEPROM
 long    wormSensePos                    = 0;                 // in steps
 boolean wormSensedAgain                 = false;             // indicates PEC index was found
-int     LastPecPinState                 = PEC_SENSE_STATE;                         
 boolean pecBufferStart                  = false;                                   
 fixed_t accPecGuideHA;                                       // for PEC, buffers steps to be recorded
 volatile double pecTimerRateAxis1 = 0.0;
@@ -365,30 +375,25 @@ volatile int blAxis1                    = 0;
 volatile int blAxis2                    = 0;
 
 // aux pin control
-#ifdef Aux0
-  byte valueAux0 = 0;
-#endif
-#ifdef Aux1
-  byte valueAux1 = 0;
-#endif
-#ifdef Aux2
-  byte valueAux2 = 0;
-#endif
-#ifdef Aux3
-  byte valueAux3 = 0;
-#endif
-#ifdef Aux4
-  byte valueAux4 = 0;
-#endif
-#ifdef Aux5
-  byte valueAux5 = 0;
-#endif
-#ifdef Aux6
-  byte valueAux6 = 0;
-#endif
-#ifdef Aux7
-  byte valueAux7 = 0;
-#endif
-#ifdef Aux8
-  byte valueAux8 = 0;
+#ifdef FEATURES_PRESENT
+typedef struct Features {
+   const char* name;
+   const int purpose;
+   const int64_t temp;
+   const int64_t pin;
+   int value;
+   dewHeaterControl *dewHeater;
+   intervalometerControl *intervalometer;
+} features;
+
+features feature[8] = {
+  {FEATURE1_NAME,FEATURE1_PURPOSE,FEATURE1_TEMP,FEATURE1_PIN,0,NULL,NULL},
+  {FEATURE2_NAME,FEATURE2_PURPOSE,FEATURE2_TEMP,FEATURE2_PIN,0,NULL,NULL},
+  {FEATURE3_NAME,FEATURE3_PURPOSE,FEATURE3_TEMP,FEATURE3_PIN,0,NULL,NULL},
+  {FEATURE4_NAME,FEATURE4_PURPOSE,FEATURE4_TEMP,FEATURE4_PIN,0,NULL,NULL},
+  {FEATURE5_NAME,FEATURE5_PURPOSE,FEATURE5_TEMP,FEATURE5_PIN,0,NULL,NULL},
+  {FEATURE6_NAME,FEATURE6_PURPOSE,FEATURE6_TEMP,FEATURE6_PIN,0,NULL,NULL},
+  {FEATURE7_NAME,FEATURE7_PURPOSE,FEATURE7_TEMP,FEATURE7_PIN,0,NULL,NULL},
+  {FEATURE8_NAME,FEATURE8_PURPOSE,FEATURE8_TEMP,FEATURE8_PIN,0,NULL,NULL}
+};
 #endif
