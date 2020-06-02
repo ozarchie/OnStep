@@ -3,15 +3,15 @@
 
 #if STEP_WAVE_FORM == PULSE
   // motor timers at 1x rate
-  #define TIMER_PULSE_STEP_MULTIPLIER 1
+  #define TIMER_PULSE_STEP true
 #elif STEP_WAVE_FORM == DEDGE
   // motor timers at 1x rate
-  #define TIMER_PULSE_STEP_MULTIPLIER 1
+  #define TIMER_PULSE_STEP true
   volatile byte toggleStateAxis1 = 0;
   volatile byte toggleStateAxis2 = 0;
 #else
   // motor timers at 2x rate
-  #define TIMER_PULSE_STEP_MULTIPLIER 0.5
+  #define TIMER_PULSE_STEP false
   volatile boolean clearAxis1 = true;
   volatile boolean takeStepAxis1 = false;
   volatile boolean clearAxis2 = true;
@@ -127,7 +127,7 @@ void timerSupervisor(bool isCentiSecond) {
           axis1DriverGotoMode();
 
           // at higher step rates where torque is reduced make smaller rate changes
-          double r=1.2-sqrt((abs(guideTimerRateAxis1A)/slewRateX));
+          double r=1.2-sqrt((fabs(guideTimerRateAxis1A)/slewRateX));
           if (r < 0.2) r=0.2; if (r > 1.2) r=1.2;
   
           // acceleration/deceleration control
@@ -142,14 +142,13 @@ void timerSupervisor(bool isCentiSecond) {
   
           // stop guiding
           if (guideDirAxis1 == 'b') {
-            if (abs(guideTimerRateAxis1A) < 0.001) { guideDirAxis1=0; lastGuideDirAxis1=0; guideTimerRateAxis1=0.0; guideTimerRateAxis1A=0.0; guideDirChangeTimerAxis1=0; axis1DriverTrackingMode(false); }
+            if (fabs(guideTimerRateAxis1A) < 0.001) { guideDirAxis1=0; lastGuideDirAxis1=0; guideTimerRateAxis1=0.0; guideTimerRateAxis1A=0.0; guideDirChangeTimerAxis1=0; axis1DriverTrackingMode(false); }
           }
         }
       }
     } else guideTimerRateAxis1A=0.0;
 
-    double timerRateAxis1A=trackingTimerRateAxis1;
-    double timerRateAxis1B=guideTimerRateAxis1A+pecTimerRateAxis1+timerRateAxis1A;
+    double timerRateAxis1B=guideTimerRateAxis1A+pecTimerRateAxis1+trackingTimerRateAxis1;
     if (timerRateAxis1B < -0.00001) { timerRateAxis1B=fabs(timerRateAxis1B); cli(); timerDirAxis1=-1; sei(); } else 
       if (timerRateAxis1B > 0.00001) { cli(); timerDirAxis1=1; sei(); } else { cli(); timerDirAxis1=0; sei(); timerRateAxis1B=1.0; }
     long calculatedTimerRateAxis1=round((double)SiderealRate/timerRateAxis1B);
@@ -169,7 +168,7 @@ void timerSupervisor(bool isCentiSecond) {
           axis2DriverGotoMode();
   
           // at higher step rates where torque is reduced make smaller rate changes
-          double r=1.2-sqrt((abs(guideTimerRateAxis2A)/slewRateX));
+          double r=1.2-sqrt((fabs(guideTimerRateAxis2A)/slewRateX));
           if (r < 0.2) r=0.2; if (r > 1.2) r=1.2;
   
           // acceleration/deceleration control
@@ -184,14 +183,13 @@ void timerSupervisor(bool isCentiSecond) {
   
           // stop guiding
           if (guideDirAxis2 == 'b') {
-            if (abs(guideTimerRateAxis2A) < 0.001) { guideDirAxis2=0; lastGuideDirAxis2=0; guideTimerRateAxis2=0.0; guideTimerRateAxis2A=0.0; guideDirChangeTimerAxis2=0; axis2DriverTrackingMode(false); }
+            if (fabs(guideTimerRateAxis2A) < 0.001) { guideDirAxis2=0; lastGuideDirAxis2=0; guideTimerRateAxis2=0.0; guideTimerRateAxis2A=0.0; guideDirChangeTimerAxis2=0; axis2DriverTrackingMode(false); }
           }
         }
       }
     } else guideTimerRateAxis2A=0.0;
 
-    double timerRateAxis2A=trackingTimerRateAxis2;
-    double timerRateAxis2B=guideTimerRateAxis2A+timerRateAxis2A;
+    double timerRateAxis2B=guideTimerRateAxis2A+trackingTimerRateAxis2;
     if (timerRateAxis2B < -0.0001) { timerRateAxis2B=fabs(timerRateAxis2B); cli(); timerDirAxis2=-1; sei(); } else
       if (timerRateAxis2B > 0.0001) { cli(); timerDirAxis2=1; sei(); } else { cli(); timerDirAxis2=0; sei(); timerRateAxis2B=1.0; }
     long calculatedTimerRateAxis2=round((double)SiderealRate/timerRateAxis2B);
@@ -217,11 +215,11 @@ void timerSupervisor(bool isCentiSecond) {
 
   // set the rates
   if (thisTimerRateAxis1 != isrTimerRateAxis1) {
-    PresetTimerInterval(thisTimerRateAxis1/PPSrateRatio, TIMER_PULSE_STEP_MULTIPLIER, &nextAxis1Rate, &slowAxis1Rep);
+    PresetTimerInterval(thisTimerRateAxis1/PPSrateRatio, TIMER_PULSE_STEP, &nextAxis1Rate, &slowAxis1Rep);
     isrTimerRateAxis1=thisTimerRateAxis1;
   }
   if (thisTimerRateAxis2 != isrTimerRateAxis2) {
-    PresetTimerInterval(thisTimerRateAxis2/PPSrateRatio, TIMER_PULSE_STEP_MULTIPLIER, &nextAxis2Rate, &slowAxis2Rep);
+    PresetTimerInterval(thisTimerRateAxis2/PPSrateRatio, TIMER_PULSE_STEP, &nextAxis2Rate, &slowAxis2Rep);
     isrTimerRateAxis2=thisTimerRateAxis2;
   }
 }
@@ -263,7 +261,11 @@ IRAM_ATTR ISR(TIMER3_COMPA_vect)
   if ((trackingState != TrackingMoveTo) && (!inbacklashAxis1)) targetAxis1.part.m+=timerDirAxis1*stepAxis1;
 
   // move the RA/Azm stepper to the target
+#if MODE_SWITCH_BEFORE_SLEW == OFF
   if ((posAxis1 != (long)targetAxis1.part.m) || inbacklashAxis1) {
+#else
+  if ((labs(posAxis1 - (long)targetAxis1.part.m) >= stepAxis1) || inbacklashAxis1) {
+#endif
 
     // set direction
     if (posAxis1 < (long)targetAxis1.part.m) dirAxis1=1; else dirAxis1=0;
@@ -343,7 +345,11 @@ IRAM_ATTR ISR(TIMER4_COMPA_vect)
   if ((trackingState != TrackingMoveTo) && (!inbacklashAxis2)) targetAxis2.part.m+=timerDirAxis2*stepAxis2;
 
   // move the Dec/Alt stepper to the target
+#if MODE_SWITCH_BEFORE_SLEW == OFF
   if (axis2Powered && ((posAxis2 != (long)targetAxis2.part.m) || inbacklashAxis2)) {
+#else
+  if (axis2Powered && ((labs(posAxis2 - (long)targetAxis2.part.m) >= stepAxis2) || inbacklashAxis2)) {
+#endif
     
     // set direction
     if (posAxis2 < (long)targetAxis2.part.m) dirAxis2=1; else dirAxis2=0;

@@ -35,7 +35,7 @@
  *   https://groups.io/g/onstep
  */
 
-// Use Config.xxx.h to configure OnStep to your requirements
+// Use Config.h to configure OnStep to your requirements
 
 // firmware info, these are returned by the ":GV?#" commands
 #include <SPI.h>
@@ -51,8 +51,8 @@
 #include <dummy.h>
 #define FirmwareDate          __DATE__
 #define FirmwareVersionMajor  4
-#define FirmwareVersionMinor  0       // minor version 0 to 99
-#define FirmwareVersionPatch  "c"     // for example major.minor patch: 1.3c
+#define FirmwareVersionMinor  7       // minor version 0 to 99
+#define FirmwareVersionPatch  "b"     // for example major.minor patch: 1.3c
 #define FirmwareVersionConfig 3       // internal, for tracking configuration file changes
 #define FirmwareName          "On-Step"
 #define FirmwareTime          __TIME__
@@ -94,6 +94,8 @@
 
 #include "src/lib/St4SerialMaster.h"
 #include "src/lib/FPoint.h"
+#include "src/lib/Heater.h"
+#include "src/lib/Intervalometer.h"
 #include "Globals.h"
 #include "src/lib/Julian.h"
 #include "src/lib/Misc.h"
@@ -177,7 +179,11 @@ void setup() {
 
   SerialA.begin(SERIAL_A_BAUD_DEFAULT);
 #ifdef HAL_SERIAL_B_ENABLED
-  SerialB.begin(SERIAL_B_BAUD_DEFAULT);
+  #ifdef SERIAL_B_RX
+    SerialB.begin(SERIAL_B_BAUD_DEFAULT, SERIAL_8N1, SERIAL_B_RX, SERIAL_B_TX);
+  #else
+    SerialB.begin(SERIAL_B_BAUD_DEFAULT);
+  #endif
 #endif
 #ifdef HAL_SERIAL_C_ENABLED
   SerialC.begin(SERIAL_C_BAUD_DEFAULT);
@@ -224,6 +230,11 @@ void setup() {
   
   // get weather monitoring ready to go
   if (!ambient.init()) generalError=ERR_WEATHER_INIT;
+
+  // setup features
+#ifdef FEATURES_PRESENT
+  featuresInit();
+#endif
 
   // get the TLS ready (if present)
   if (!tls.init()) generalError=ERR_SITE_INIT;
@@ -366,14 +377,6 @@ void loop2() {
   ST4();
   if ((trackingState != TrackingMoveTo) && (parkStatus == NotParked)) guide();
 
-#if MOUNT_TYPE != ALTAZM
-  // PERIODIC ERROR CORRECTION -------------------------------------------------------------------------
-  if ((trackingState == TrackingSidereal) && (parkStatus == NotParked) && (!((guideDirAxis1 || guideDirAxis2) && (activeGuideRate > GuideRate1x)))) { 
-    // only active while sidereal tracking with a guide rate that makes sense
-    pec();
-  } else disablePec();
-#endif
-
 #if HOME_SENSE != OFF
   // AUTOMATIC HOMING ----------------------------------------------------------------------------------
   checkHome();
@@ -389,20 +392,16 @@ void loop2() {
 #endif
     
 #if MOUNT_TYPE != ALTAZM
-    // WRITE PERIODIC ERROR CORRECTION TO EEPROM
-    if (pecAutoRecord > 0) {
-      // write PEC table to EEPROM, should do several hundred bytes/second
-      pecAutoRecord--;
-      nv.update(EE_pecTable+pecAutoRecord,pecBuffer[pecAutoRecord]);
-    }
+    // PERIODIC ERROR CORRECTION
+    pec();
 #endif
 
     // FLASH LED DURING SIDEREAL TRACKING
-    if (trackingState == TrackingSidereal) {
 #if LED_STATUS == ON
+    if (trackingState == TrackingSidereal) {
       if (siderealTimer%20L == 0L) { if (ledOn) { digitalWrite(LEDnegPin,HIGH); ledOn=false; } else { digitalWrite(LEDnegPin,LOW); ledOn=true; } }
-#endif
     }
+#endif
 
     // SIDEREAL TRACKING DURING GOTOS
     // keeps the target where it's supposed to be while doing gotos
@@ -510,6 +509,14 @@ void loop2() {
     double t2=(double)((cs-lst_start)/100.0)/1.00273790935;
     // This just needs to be accurate to the nearest second, it's about 10x better
     UT1=UT1_start+(t2/3600.0);
+
+    // UPDATE AUXILIARY FEATURES
+#ifdef FEATURES_PRESENT
+    featuresPoll();
+#endif
+    
+    // WEATHER
+    if (!isSlewing()) ambient.poll();
   }
 
   // FASTEST POLLING -----------------------------------------------------------------------------------
@@ -525,8 +532,8 @@ void loop2() {
   if (!isSlewing()) nv.poll();
   
   // WORKLOAD MONITORING -------------------------------------------------------------------------------
-  long this_loop_micros=micros();
-  loop_time=this_loop_micros-last_loop_micros;
+  unsigned long this_loop_micros=micros();
+  loop_time=(long)(this_loop_micros-last_loop_micros);
   if (loop_time > worst_loop_time) worst_loop_time=loop_time;
   last_loop_micros=this_loop_micros;
   average_loop_time=(average_loop_time*49+loop_time)/50;
@@ -550,11 +557,6 @@ void loop2() {
     // basic check to see if we're not at home
     if (trackingState != TrackingNone) atHome=false;
 
-#if PEC_SENSE >= 0
-    // analog mode, see if we're on the PEC index
-    if (trackingState == TrackingSidereal) pecAnalogValue = analogRead(AnalogPecPin);
-#endif
-    
 #if PPS_SENSE != OFF
     // update clock via PPS
     if (trackingState == TrackingSidereal) {
@@ -620,9 +622,6 @@ void loop2() {
       if (currentDec > AXIS2_LIMIT_MAX) { generalError=ERR_DEC; decMaxLimit(); }
   #endif
 #endif
-
-    // SLOW POLLING --------------------------------------------------------------------------------------
-    if (!isSlewing()) ambient.poll(); // update weather info
 
   } else {
     // COMMAND PROCESSING --------------------------------------------------------------------------------

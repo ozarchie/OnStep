@@ -4,22 +4,23 @@
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
 
 // The multi-purpose pins (Aux3..Aux8 can be analog (pwm/dac) if supported)
-#define Aux0                 11
-#define Aux1                 29
-#define Aux2                 37
+#define Aux0                 11     // Status LED
+#define Aux1                 29     // ESP8266 GPIO0, SPI MISO/Fault
+#define Aux2                 37     // ESP8266 RST, SPI MISO/Fault
 #define Aux3                 32     // Home SW; note modified pinmap 10/2/19 Aux3 and Aux4 were changed, 9/30/19 Aux5 was removed
-#define Aux4                 39     // Home SW
-#define Aux6                  8     // Heater
-#define Aux7                  9     // Heater, analog (pwm)
-#define Aux7_Analog
-#define Aux8                 10     // Heater, analog (pwm)
-#define Aux8_Analog
+#define Aux4                 39     // OneWire, Home SW
+#define Aux6                  8     // Dew Heater1
+#define Aux7                  9     // Dew Heater2
+#define Aux8                 10     // Dew Heater3
 
 #ifndef DS3234_CS_PIN
   #define DS3234_CS_PIN      53     // Default CS Pin for DS3234 on SPI
 #endif
 #ifndef BME280_CS_PIN
   #define BME280_CS_PIN      49     // Default CS Pin for BME280 on SPI
+#endif
+#ifndef OneWirePin
+  #define OneWirePin       Aux4     // Default Pin for OneWire bus
 #endif
 #define ESP8266Gpio0Pin    Aux1     // ESP8266 GPIO0 or SPI MISO/Fault
 #define ESP8266RstPin      Aux2     // ESP8266 RST or SPI MISO/Fault

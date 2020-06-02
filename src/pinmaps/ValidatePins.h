@@ -50,6 +50,9 @@
 #if PINMAP == MaxESP3
   #include "Validate.MaxESP3.h"
 #endif
+#if PINMAP == CNC3
+  #include "Validate.CNC3.h"
+#endif
 #if PINMAP == Ramps14
   #include "Validate.Ramps14.h"
 #endif
@@ -58,6 +61,9 @@
 #endif
 #if PINMAP == STM32Blue
   #include "Validate.STM32Blue.h"
+#endif
+#if PINMAP == FYSETC_S6
+  #include "Validate.FYSETC_S6.h"
 #endif
 #if PINMAP == STM32Black
 #endif
@@ -127,12 +133,12 @@
   #error "Configuration (Config.h): PEC_SENSE in ANALOG mode not supported for this PINMAP, use ON, etc. NOT a threshold value"
 #endif
 
-// RTC DS3234 SPI allowed?
-#if (RTC == DS3234S || RTC == DS3234M) && !defined(DS3234_CS_PIN)
+// TIME_LOCATION_SOURCE DS3234 SPI allowed?
+#if (TIME_LOCATION_SOURCE == DS3234S || TIME_LOCATION_SOURCE == DS3234M) && !defined(DS3234_CS_PIN)
   #if PINMAP == Classic
-      #error "Configuration (Config.h): DS3234 RTC using SPI is not supported, use PINMAP ClassicShield or add '#define ST4_ALTERNATE_PINS_ON' to move the ST4 port pins"
+      #error "Configuration (Config.h): DS3234 TIME_LOCATION_SOURCE using SPI is not supported, use PINMAP ClassicShield or add '#define ST4_ALTERNATE_PINS_ON' to move the ST4 port pins"
     #else
-      #error "Configuration (Config.h): DS3234 RTC using SPI is not supported for this PINMAP"
+      #error "Configuration (Config.h): DS3234 TIME_LOCATION_SOURCE using SPI is not supported for this PINMAP"
   #endif
 #endif
 
@@ -151,51 +157,6 @@
 #if ROTATOR == ON && FOCUSER2 == ON
   #if Axis3_STEP == Axis5_STEP
     #error "Configuration (Config.h): AXIS3 and AXIS5 step/dir interface is shared, so enabling both is not supported on this PINMAP"
-  #endif
-#endif
-
-// if we have a >= 3 driver SPI bus it's a requirement that all drivers be TMC SPI (or OFF)
-// except for MksGenL2 which can set modes on shunts instead
-#if PINMAP != MksGenL2
-  #ifndef Axis3_M0
-    #define Axis3_M0 -1
-  #endif
-  #ifndef Axis3_M1
-    #define Axis3_M1 -1
-  #endif
-  #if Axis1_M0 == Axis2_M0 && Axis1_M1 == Axis2_M1 && Axis1_M0 == Axis3_M0 && Axis1_M1 == Axis3_M1
-    // special checks for SPI bus pin maps to ensure all enabled stepper drivers are TMC2130 or TMC5160 in SPI mode
-    #if AXIS1_DRIVER_MODEL != TMC_SPI
-      #error "Configuration (Config.h): AXIS1_DRIVER_MODEL must be a TMC2130 or TMC5160 for this PINMAP"
-    #endif
-    #if AXIS2_DRIVER_MODEL != TMC_SPI
-      #error "Configuration (Config.h): AXIS2_DRIVER_MODEL must be a TMC2130 or TMC5160 for this PINMAP"
-    #endif
-    #if Axis1_M0 == Axis3_M0 && Axis1_M1 == Axis3_M1 && ROTATOR == ON
-      #if AXIS3_DRIVER_MODEL != TMC_SPI
-        #error "Configuration (Config.h): AXIS3_DRIVER_MODEL must be a TMC2130 or TMC5160 for this PINMAP, or AXIS3 must be OFF"
-      #endif
-    #endif
-    #if Axis1_M0 == Axis4_M0 && Axis1_M1 == Axis4_M1 && FOCUSER1 == ON
-      #if AXIS4_DRIVER_MODEL != TMC_SPI
-        #error "Configuration (Config.h): AXIS4_DRIVER_MODEL must be a TMC2130 or TMC5160 for this PINMAP, or AXIS4 must be OFF"
-      #endif
-    #endif
-    #if Axis1_M0 == Axis5_M0 && Axis1_M1 == Axis5_M1 && FOCUSER2 == ON
-      #if AXIS5_DRIVER_MODEL != TMC_SPI
-        #error "Configuration (Config.h): AXIS5_DRIVER_MODEL must be a TMC2130 or TMC5160 for this PINMAP, or AXIS5 must be OFF"
-      #endif
-    #endif
-  #else
-    #if ROTATOR == ON && AXIS3_DRIVER_MODEL != OFF
-      #error "Configuration (Config.h): AXIS3_DRIVER_MODEL must be OFF for this PINMAP"
-    #endif
-    #if FOCUSER1 == ON && AXIS4_DRIVER_MODEL != OFF
-      #error "Configuration (Config.h): AXIS4_DRIVER_MODEL must be OFF for this PINMAP"
-    #endif
-    #if FOCUSER2 == ON && AXIS5_DRIVER_MODEL != OFF
-      #error "Configuration (Config.h): AXIS5_DRIVER_MODEL must be OFF for this PINMAP"
-    #endif
   #endif
 #endif
 
@@ -236,4 +197,62 @@
   #if Axis5_EN == -1
     #error "Configuration (Config.h): AXIS5_DRIVER_POWER_DOWN requires ENable signal support which this PINMAP doesn't have"
   #endif
+#endif
+
+// ACCESSORIES ------------------------------
+#if FEATURE1_PURPOSE != OFF && FEATURE1_PIN == AUX && defined(Aux1)
+  #if ASSIGNED_AUX1 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE1_PIN AUX enabled but Aux1 is already in use, choose one feature on Aux1"
+  #endif
+  #undef FEATURE1_PIN
+  #define FEATURE1_PIN Aux1
+#endif
+#if FEATURE2_PURPOSE != OFF && FEATURE2_PIN == AUX && defined(Aux2)
+  #if ASSIGNED_AUX2 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE2_PIN AUX enabled but Aux2 is already in use, choose one feature on Aux2"
+  #endif
+  #undef FEATURE2_PIN
+  #define FEATURE2_PIN Aux2
+#endif
+#if FEATURE3_PURPOSE != OFF && FEATURE3_PIN == AUX && defined(Aux3)
+  #if ASSIGNED_AUX3 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE3_PIN AUX enabled but Aux3 is already in use, choose one feature on Aux3"
+  #endif
+  #undef FEATURE3_PIN
+  #define FEATURE3_PIN Aux3
+#endif
+#if FEATURE4_PURPOSE != OFF && FEATURE4_PIN == AUX && defined(Aux3)
+  #if ASSIGNED_AUX4 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE4_PIN AUX enabled but Aux4 is already in use, choose one feature on Aux4"
+  #endif
+  #undef FEATURE4_PIN
+  #define FEATURE4_PIN Aux4
+#endif
+#if FEATURE5_PURPOSE != OFF && FEATURE5_PIN == AUX && defined(Aux5)
+  #if ASSIGNED_AUX5 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE5_PIN AUX enabled but Aux5 is already in use, choose one feature on Aux5"
+  #endif
+  #undef FEATURE5_PIN
+  #define FEATURE5_PIN Aux5
+#endif
+#if FEATURE6_PURPOSE != OFF && FEATURE6_PIN == AUX && defined(Aux6)
+  #if ASSIGNED_AUX6 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE6_PIN AUX enabled but Aux6 is already in use, choose one feature on Aux6"
+  #endif
+  #undef FEATURE6_PIN
+  #define FEATURE6_PIN Aux6
+#endif
+#if FEATURE7_PURPOSE != OFF && FEATURE7_PIN == AUX && defined(Aux7)
+  #if ASSIGNED_AUX7 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE7_PIN AUX enabled but Aux7 is already in use, choose one feature on Aux7"
+  #endif
+  #undef FEATURE7_PIN
+  #define FEATURE7_PIN Aux7
+#endif
+#if FEATURE8_PURPOSE != OFF && FEATURE8_PIN == AUX && defined(Aux8)
+  #if ASSIGNED_AUX8 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): FEATURE8_PIN AUX enabled but Aux8 is already in use, choose one feature on Aux8"
+  #endif
+  #undef FEATURE8_PIN
+  #define FEATURE8_PIN Aux8
 #endif

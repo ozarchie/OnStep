@@ -50,7 +50,7 @@ class focuserStepper : public focuser {
     }
 
     // temperature compensation
-    void setTcfCoef(double coef) { if (abs(coef) >= 10000.0) coef = 0.0; tcf_coef = coef; nv.writeFloat(nvTcfCoef,tcf_coef); }
+    void setTcfCoef(double coef) { if (fabs(coef) >= 10000.0) coef = 0.0; tcf_coef = coef; nv.writeFloat(nvTcfCoef,tcf_coef); }
     double getTcfCoef() { return tcf_coef; }
     void setTcfEnable(boolean enabled) { tcf = enabled; nv.write(nvTcfEn,tcf); }
     boolean getTcfEnable() { return tcf; }
@@ -77,7 +77,7 @@ class focuserStepper : public focuser {
 
     // set movement rate in microns/second, from minRate to 1000
     void setMoveRate(double rate) {
-      constrain(rate,minRate,1000);
+      rate = constrain(rate,minRate,1000);
       moveRate=rate*spm;                            // in steps per second
       if (moveRate > spsMax) moveRate=spsMax;       // limit to maxRate
     }

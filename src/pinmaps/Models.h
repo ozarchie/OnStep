@@ -28,14 +28,14 @@
 #if PINMAP == MaxPCB3
   #include "Pins.MaxPCB.h"
 #endif
-#if PINMAP == MaxESP
-  #include "Pins.MaxESP.h"
-#endif
 #if PINMAP == MaxESP2
   #include "Pins.MaxESP2.h"
 #endif
 #if PINMAP == MaxESP3
   #include "Pins.MaxESP3.h"
+#endif
+#if PINMAP == CNC3
+  #include "Pins.CNC3.h"
 #endif
 #if PINMAP == Ramps14
   #include "Pins.Ramps14.h"
@@ -45,6 +45,9 @@
 #endif
 #if PINMAP == STM32Blue
   #include "Pins.STM32B.h"
+#endif
+#if PINMAP == FYSETC_S6
+  #include "Pins.FYSETC_S6.h"
 #endif
 #if PINMAP == STM32Black
   #include "Pins.STM32B.h"

@@ -307,6 +307,7 @@ void setLatitude(double Lat) {
   nv.writeFloat(100+(currentSite)*25+0,latitude);
   cosLat=cos(latitude/Rad);
   sinLat=sin(latitude/Rad);
+  latitudeAbs=fabs(latitude);
   if (latitude >= 0) latitudeSign=1; else latitudeSign=-1;
   if (latitude >= 0) defaultDirAxis1=defaultDirAxis1NCPInit; else defaultDirAxis1=defaultDirAxis1SCPInit;
 
@@ -368,10 +369,17 @@ void topocentricToObservedPlace(double *RA, double *Dec) {
   double Alt,Azm;
   double h=LST()*15.0-*RA;
   double d=*Dec;
+
+#if TOPOCENTRIC_STRICT == ON
   // within about 1/20 arc-second of NCP
   if (fabs(d-90.0) < 0.00001) { Azm=0.0; Alt=latitude; } else 
   // within about 1/20 arc-second of SCP
   if (fabs(d+90.0) < 0.00001) { Azm=180.0; Alt=-latitude; } else equToHor(h,d,&Alt,&Azm);
+#else
+  // within about 1/20 arc-second of NCP or SCP, just exit
+  if (fabs(d-90.0) < 0.00001 || fabs(d+90.0) < 0.00001) return; else equToHor(h,d,&Alt,&Azm);
+#endif
+
   Alt = Alt+trueRefrac(Alt)/60.0;
   horToEqu(Alt,Azm,&h,&d);
   *RA=degRange(LST()*15.0-h); *Dec=d;
@@ -382,10 +390,17 @@ void observedPlaceToTopocentric(double *RA, double *Dec) {
   double Alt,Azm;
   double h=LST()*15.0-*RA;
   double d=*Dec;
+  
+#if TOPOCENTRIC_STRICT == ON
   // within about 1/20 arc-second of the "refracted" NCP
   if (fabs(d-90.0) < 0.00001) { Azm=0.0; Alt=latitude; } else
   // within about 1/20 arc-second of the "refracted" SCP
   if (fabs(d+90.0) < 0.00001) { Azm=180.0; Alt=-latitude; } else equToHor(h,d,&Alt,&Azm);
+#else  
+  // within about 1/20 arc-second of NCP or SCP, just exit
+  if (fabs(d-90.0) < 0.00001 || fabs(d+90.0) < 0.00001) return; else equToHor(h,d,&Alt,&Azm);
+#endif
+
   Alt = Alt-apparentRefrac(Alt)/60.0;
   horToEqu(Alt,Azm,&h,&d);
   *RA=degRange(LST()*15.0-h); *Dec=d;
@@ -430,13 +445,13 @@ void setDeltaTrackingRate() {
     d2=d-newTargetDec;
     if (getInstrPierSide() == PierSideEast) d2=-d2;
   #endif
-    if ((abs(d1) < ArcSecPerStepAxis1/3600.0) && (abs(d2) < ArcSecPerStepAxis2/3600.0)) {
+    if ((fabs(d1) < ArcSecPerStepAxis1/3600.0) && (fabs(d2) < ArcSecPerStepAxis2/3600.0)) {
       trackingSyncSeconds=0;
     } else {
       f1=(d1*3600.0)/120.0; if (f1 < -5.0) f1=-5.0; if (f1 > 5.0) f1=5.0;
-      if (abs(d1) < ArcSecPerStepAxis1/3600.0) f1=0.0;
+      if (fabs(d1) < ArcSecPerStepAxis1/3600.0) f1=0.0;
       f2=(d2*3600.0)/120.0; if (f2 < -5.0) f2=-5.0; if (f2 > 5.0) f2=5.0;
-      if (abs(d2) < ArcSecPerStepAxis2/3600.0) f2=0.0;
+      if (fabs(d2) < ArcSecPerStepAxis2/3600.0) f2=0.0;
     }
   }
 
