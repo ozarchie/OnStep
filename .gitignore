@@ -41,5 +41,11 @@
 *.config
 *.bak
 
+/Debug/
+/Release/
+/vs/
+/vscode/
+/_vm/
+
 # SVN folders
 .svn
